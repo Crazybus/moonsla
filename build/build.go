@@ -63,7 +63,6 @@ func build(goos string, goarch string) error {
 		"-o",
 		buildDir+"moonsla-"+goos+"_"+goarch,
 	)
-    fmt.Println(cmd)
 	return cmd.Run()
 }
 

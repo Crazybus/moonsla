@@ -9,7 +9,7 @@ services:
 script:
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic
   - wget https://github.com/Crazybus/lope/releases/download/0.2.0/lope-linux_amd64 -O lope && chmod +x lope
-  - ./lope -workDir /go/src/github.com/Crazybus/moonsla -blacklist GO golang:1.10 /usr/local/go/bin/go run build/build.go
+  - ./lope -workDir /go/src/github.com/Crazybus/moonsla -blacklist GO golang:1.10 '/usr/local/go/bin/go get -v ./... && /usr/local/go/bin/go run build/build.go'
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
