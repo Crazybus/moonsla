@@ -1,26 +1,30 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
-func TestFormatTimeStamp(t *testing.T) {
+func TestGetTimeStamp(t *testing.T) {
 	var tests = []struct {
 		description string
 		timeStamp   string
-		want        string
+		want        int64
 	}{
 		{
 			"Convert timestamp to something human readable",
 			"1530593277.000080",
-			"06:47:57",
+			1530593277,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			got := formatTimeStamp(test.timeStamp)
+			ts := getTimeStamp(test.timeStamp)
+			got := ts.Unix()
+
 			want := test.want
 
 			if got != want {
-				t.Errorf("got '%s' want '%s'", got, want)
+				t.Errorf("got '%v' want '%v'", got, want)
 			}
 		})
 	}
