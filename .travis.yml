@@ -1,10 +1,22 @@
 language: go
+
 go:
   - "1.10"
 
-
 script:
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic
+  - wget https://github.com/Crazybus/lope/releases/download/0.2.0/lope-linux_amd64 -O lope && chmod +x lope
+  - ./lope -workDir /go/src/github.com/Crazybus/moonsla -blacklist GO golang:1.10 /usr/local/go/bin/go run build/build.go
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+  provider: releases
+  api_key:
+    secure: hT+TBmMhj8yFvGfTOGPhoVuiINprm600JijpT//kgO2PBiiQ/Tcc+ShEiXGXNoXb+mngMj+w4NsPbNjFR6K1TIxsyFDrmN2RvKi01SJZMKgpbJH5+VmkMPHJX0AxMcHjYTBkz9inM6PLzFsSHrDO296gjGpM4xMvh4wuOYz/4JH9dLcsn6BdchhrA1ipKrHwsDU6DaK9YvZwjRpB3eO4s5woUuYfHgr9OkAPLCUuh6u+HCRhtxH8F9aNtNVlHm43u9lLcwJ41YVycpfRNEhHp30Nrghn4PciPoqISJVyRSSva96HSlR9+T55aCGY0ch762k9P6CeP3OQfK/2s8v5Fcq40ScUm+GLntRv49O1eJuqBkI7HImnHzrb1w329MgJTijFVxf3W7jEj4mjyttuyScMzd9b7/ERRGUzhqqQx488ICw3tU9+fnfguhEaNt3DanyijT6ZYqVA6TQTanc/z+w+uQTy7w92mRocNNYPJA17yL8BOS7EJb5vu0+ifVyXco+5McTBcJUSm+zqFzLm2Ey3VGs4eVbCY3r4XvOSr3P3MjR1iB8u+fBeVqL6TPi+p0eRPtSHjoRRPjsmoupv9fpmRIDA7hXi3GoT9HZB8fSfFtKoEgfi7lz67UPwQXADhIEnTD5SKptt897lvq1DOj4lDDETakdkBkBKIBWdh4w=
+  file_glob: true
+  file: build/moonsla*
+  skip_cleanup: true
+  on:
+    tags: true
