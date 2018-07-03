@@ -1,5 +1,7 @@
 # Moonsla
 
+[![Build Status](https://travis-ci.org/Crazybus/moonsla.svg?branch=master)](https://travis-ci.org/Crazybus/moonsla)
+
 Moonsla is a small tool to display a stream of slack messages in a single view.
 
 It looks something like this
