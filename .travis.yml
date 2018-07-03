@@ -3,6 +3,9 @@ language: go
 go:
   - "1.10"
 
+services:
+  - docker
+
 script:
   - go test -v -race -coverprofile=coverage.txt -covermode=atomic
   - wget https://github.com/Crazybus/lope/releases/download/0.2.0/lope-linux_amd64 -O lope && chmod +x lope
