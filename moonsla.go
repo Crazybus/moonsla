@@ -65,6 +65,10 @@ func formatUrls(msg string) string {
 	matches := re.FindAllString(msg, -1)
 	for _, m := range matches {
 		split := strings.Split(m[1:len(m)-1], "|")
+		// If this is just a plain url continue since we can't format it
+		if len(split) == 1 {
+			continue
+		}
 		url := split[0 : len(split)-1][0]
 		title := split[len(split)-1]
 		formatted := fmt.Sprintf("\x1b]8;;%s\a%s\x1b]8;;\a", url, title)

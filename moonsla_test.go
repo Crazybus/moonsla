@@ -216,6 +216,11 @@ func TestFormatUrls(t *testing.T) {
 			"hello \x1b]8;;http://google.com\atest\x1b]8;;\a world",
 		},
 		{
+			"Message with a non-formatted url",
+			"hello http://google.com world",
+			"hello http://google.com world",
+		},
+		{
 			"Message with multiple urls",
 			"hello <http://google.com|test> world how <https://google.com|are you>",
 			"hello \x1b]8;;http://google.com\atest\x1b]8;;\a world how \x1b]8;;https://google.com\aare you\x1b]8;;\a",
