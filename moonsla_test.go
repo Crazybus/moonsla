@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/nlopes/slack"
 )
 
 func TestGetTimeStamp(t *testing.T) {
@@ -142,6 +144,56 @@ func TestFormatMentions(t *testing.T) {
 
 			if got != want {
 				t.Errorf("got '%s' want '%s'", got, want)
+			}
+		})
+	}
+}
+
+func TestFormatAttachments(t *testing.T) {
+	var tests = []struct {
+		description string
+		attachments []slack.Attachment
+		want        string
+	}{
+		{
+			"Print attachment as single line",
+			[]slack.Attachment{slack.Attachment{
+				Title: "",
+				Text:  "test message",
+			}},
+			"test message",
+		},
+		{
+			"Print attachment with title",
+			[]slack.Attachment{slack.Attachment{
+				Title: "title",
+				Text:  "test message",
+			}},
+			"title: test message",
+		},
+		{
+			"Print multie attachments",
+			[]slack.Attachment{
+				slack.Attachment{
+					Title: "",
+					Text:  "first message",
+				},
+				slack.Attachment{
+					Title: "",
+					Text:  "second message",
+				}},
+			"first message\nsecond message",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+
+			got := formatAttachments(test.attachments)
+
+			want := test.want
+
+			if got != want {
+				t.Errorf("got '%v' want '%v'", got, want)
 			}
 		})
 	}
