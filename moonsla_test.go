@@ -198,3 +198,39 @@ func TestFormatAttachments(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatUrls(t *testing.T) {
+	var tests = []struct {
+		description string
+		message     string
+		want        string
+	}{
+		{
+			"Message with no urls",
+			"test message",
+			"test message",
+		},
+		{
+			"Message with a url",
+			"hello <http://google.com|test> world",
+			"hello \x1b]8;;http://google.com\atest\x1b]8;;\a world",
+		},
+		{
+			"Message with multiple urls",
+			"hello <http://google.com|test> world how <https://google.com|are you>",
+			"hello \x1b]8;;http://google.com\atest\x1b]8;;\a world how \x1b]8;;https://google.com\aare you\x1b]8;;\a",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+
+			got := formatUrls(test.message)
+
+			want := test.want
+
+			if got != want {
+				t.Errorf("got '%v' want '%v'", got, want)
+			}
+		})
+	}
+}

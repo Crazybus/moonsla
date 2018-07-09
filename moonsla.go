@@ -53,6 +53,26 @@ func formatMentions(msg string, users map[string]string) string {
 	return msg
 }
 
+func formatUrls(msg string) string {
+	// Formats slack url into hyperlinks https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+	// Setting MOONSLA_NO_HYPERLINKS=true will disable this for terminals which don't support it yet.
+
+	if os.Getenv("MOONSLA_NO_HYPERLINKS") != "" {
+		return msg
+	}
+
+	re := regexp.MustCompile("<http.*?>")
+	matches := re.FindAllString(msg, -1)
+	for _, m := range matches {
+		split := strings.Split(m[1:len(m)-1], "|")
+		url := split[0 : len(split)-1][0]
+		title := split[len(split)-1]
+		formatted := fmt.Sprintf("\x1b]8;;%s\a%s\x1b]8;;\a", url, title)
+		msg = strings.Replace(msg, m, formatted, -1)
+	}
+	return msg
+}
+
 func formatAttachments(attachments []slack.Attachment) string {
 
 	var messages []string
@@ -146,6 +166,8 @@ func main() {
 			}
 
 			msg := formatMentions(text, users)
+
+			msg = formatUrls(msg)
 
 			fmt.Printf("%v - %v - %v: %v\n", timeStamp, cName, uName, msg)
 
