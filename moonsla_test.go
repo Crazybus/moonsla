@@ -217,8 +217,8 @@ func TestFormatUrls(t *testing.T) {
 		},
 		{
 			"Message with a non-formatted url",
-			"hello http://google.com world",
-			"hello http://google.com world",
+			"hello <http://google.com> world",
+			"hello <http://google.com> world",
 		},
 		{
 			"Message with multiple urls",
