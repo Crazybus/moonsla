@@ -53,6 +53,22 @@ func formatMentions(msg string, users map[string]string) string {
 	return msg
 }
 
+func formatAttachments(attachments []slack.Attachment) string {
+
+	var messages []string
+
+	for _, a := range attachments {
+
+		text := a.Text
+		if a.Title != "" {
+			text = a.Title + ": " + text
+		}
+
+		messages = append(messages, text)
+	}
+	return strings.Join(messages, "\n")
+}
+
 func filterChannel(name string, channels map[string]string, whitelist []string) (whitelisted bool, cName string) {
 	whitelisted = false
 
@@ -105,11 +121,6 @@ func main() {
 
 		case *slack.MessageEvent:
 
-			// Skip empty messages
-			if ev.Text == "" {
-				continue
-			}
-
 			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist)
 			if !whitelisted {
 				continue
@@ -121,10 +132,20 @@ func main() {
 				uName = ev.User
 			}
 
+			if ev.Username != "" {
+				uName = ev.Username
+			}
+
 			t := getTimeStamp(ev.EventTimestamp)
 			timeStamp := fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
 
-			msg := formatMentions(ev.Text, users)
+			text := ev.Text
+
+			if len(ev.Attachments) > 0 {
+				text = formatAttachments(ev.Attachments)
+			}
+
+			msg := formatMentions(text, users)
 
 			fmt.Printf("%v - %v - %v: %v\n", timeStamp, cName, uName, msg)
 
