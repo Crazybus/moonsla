@@ -79,6 +79,19 @@ func TestFilterChannel(t *testing.T) {
 			"123",
 			true,
 		},
+		{
+			"Empty whitelist matches all channels",
+			"12345",
+			map[string]string{
+				"12345": "channel-name",
+				"12344": "spam-channel",
+			},
+			[]string{
+				"",
+			},
+			"channel-name",
+			true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {

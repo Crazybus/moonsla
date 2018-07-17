@@ -108,7 +108,7 @@ func filterChannel(name string, channels map[string]string, whitelist []string) 
 		cName = name
 	}
 
-	if len(whitelist) == 0 {
+	if len(whitelist) == 1 && whitelist[0] == "" {
 		whitelisted = true
 	}
 
