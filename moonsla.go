@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nlopes/slack"
 	"github.com/logrusorgru/aurora"
+	"github.com/nlopes/slack"
 )
 
 func getChannels(api *slack.Client) (channels map[string]string) {
@@ -105,7 +105,7 @@ func formatAttachments(attachments []slack.Attachment) string {
 
 func filterChannel(name string, channels map[string]string, whitelist []string, blacklist []string) (whitelisted bool, cName string) {
 	whitelisted = false
-	var blacklisted bool = false
+	blacklisted := false
 
 	cName, ok := channels[name]
 	if ok {
@@ -128,23 +128,25 @@ func filterChannel(name string, channels map[string]string, whitelist []string, 
 		whitelisted = true
 	}
 
+	if len(blacklist) == 1 && blacklist[0] == "" {
+		blacklisted = false
+	}
+
 	if blacklisted {
 		return false, cName
-	} else {
-		return whitelisted, cName
 	}
+	return whitelisted, cName
 }
 
-func min_int(a int, b int) int {
+func minInt(a int, b int) int {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }
 
 func takeN(text []string, n int) []string {
-	return text[:min_int(n, len(text))]
+	return text[:minInt(n, len(text))]
 }
 
 func trim(text string) string {
@@ -193,7 +195,7 @@ func main() {
 		case *slack.MessageEvent:
 
 			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist, blacklist)
-			var is_dm bool = false
+			isDm := false
 
 			// Map the users ID to a username if it exists
 			uName, ok := users[ev.User]
@@ -208,11 +210,11 @@ func main() {
 			dmName, present := dms[ev.Channel]
 			if present {
 				cName = dmName
-				is_dm = true
+				isDm = true
 			}
 
 			t, err := getTimeStamp(ev.EventTimestamp)
-			var timeStamp string = "00:00:00"
+			timeStamp := "00:00:00"
 			if err == nil {
 				timeStamp = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
 			}
@@ -236,7 +238,7 @@ func main() {
 			msg = trim(msg)
 
 			msgC := aurora.Gray(msg)
-			if is_dm {
+			if isDm {
 				msgC = aurora.Red(msg)
 			}
 

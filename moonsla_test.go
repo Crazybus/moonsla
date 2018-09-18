@@ -20,7 +20,7 @@ func TestGetTimeStamp(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			ts := getTimeStamp(test.timeStamp)
+			ts, _ := getTimeStamp(test.timeStamp)
 			got := ts.Unix()
 
 			want := test.want
@@ -37,65 +37,81 @@ func TestFilterChannel(t *testing.T) {
 		description string
 		id          string
 		channels    map[string]string
+		blacklist   []string
 		whitelist   []string
 		name        string
 		whitelisted bool
 	}{
 		{
-			"Channel that is whitelisted",
-			"12345",
-			map[string]string{
+			description: "Channel that is whitelisted",
+			id:          "12345",
+			channels: map[string]string{
 				"12345": "channel-name",
 			},
-			[]string{
+			blacklist: []string{""},
+			whitelist: []string{
 				"channel-name",
 			},
-			"channel-name",
-			true,
+			name:        "channel-name",
+			whitelisted: true,
 		},
 		{
-			"Channel that is not whitelisted",
-			"12344",
-			map[string]string{
+			description: "Channel that is blacklisted",
+			id:          "12345",
+			channels: map[string]string{
+				"12345": "channel-name",
+			},
+			blacklist:   []string{"channel-name"},
+			whitelist:   []string{""},
+			name:        "channel-name",
+			whitelisted: false,
+		},
+		{
+			description: "Channel that is not whitelisted",
+			id:          "12344",
+			channels: map[string]string{
 				"12345": "channel-name",
 				"12344": "spam-channel",
 			},
-			[]string{
+			blacklist: []string{""},
+			whitelist: []string{
 				"channel-name",
 			},
-			"spam-channel",
-			false,
+			name:        "spam-channel",
+			whitelisted: false,
 		},
 		{
-			"Channel that is not in the channels list",
-			"123",
-			map[string]string{
+			description: "Channel that is not in the channels list",
+			id:          "123",
+			channels: map[string]string{
 				"12345": "channel-name",
 				"12344": "spam-channel",
 			},
-			[]string{
+			blacklist: []string{""},
+			whitelist: []string{
 				"channel-name",
 			},
-			"123",
-			true,
+			name:        "123",
+			whitelisted: true,
 		},
 		{
-			"Empty whitelist matches all channels",
-			"12345",
-			map[string]string{
+			description: "Empty whitelist matches all channels",
+			id:          "12345",
+			channels: map[string]string{
 				"12345": "channel-name",
 				"12344": "spam-channel",
 			},
-			[]string{
+			blacklist: []string{""},
+			whitelist: []string{
 				"",
 			},
-			"channel-name",
-			true,
+			name:        "channel-name",
+			whitelisted: true,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			whitelisted, name := filterChannel(test.id, test.channels, test.whitelist)
+			whitelisted, name := filterChannel(test.id, test.channels, test.whitelist, test.blacklist)
 
 			if name != test.name {
 				t.Errorf("got '%s' want '%s'", name, test.name)
