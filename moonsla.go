@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
+	"github.com/logrusorgru/aurora"
 )
 
 func getChannels(api *slack.Client) (channels map[string]string) {
@@ -173,7 +174,9 @@ func main() {
 
 			msg = formatUrls(msg)
 
-			fmt.Printf("%v - %v - %v: %v\n", timeStamp, cName, uName, msg)
+			msgC := aurora.Gray(msg)
+
+			fmt.Printf("%v - %v - %v: %v\n", timeStamp, aurora.Green(cName), aurora.Blue(uName), msgC)
 
 		case *slack.RTMError:
 			fmt.Printf("Error: %s\n", ev.Error())
