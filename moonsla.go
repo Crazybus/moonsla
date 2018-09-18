@@ -22,6 +22,15 @@ func getChannels(api *slack.Client) (channels map[string]string) {
 	return channels
 }
 
+func getDMs(api *slack.Client, users map[string]string) (channels map[string]string) {
+	channels = make(map[string]string)
+	chans, _ := api.GetIMChannels()
+	for _, c := range chans {
+		channels[c.ID] = users[c.User]
+	}
+	return channels
+}
+
 func getUsers(api *slack.Client) (users map[string]string) {
 	users = make(map[string]string)
 	allUsers, _ := api.GetUsers()
@@ -134,6 +143,9 @@ func main() {
 	users := getUsers(api)
 	fmt.Printf("Found %v users\n", len(users))
 
+	dms := getDMs(api, users)
+	fmt.Printf("Found %v DMs\n", len(dms))
+
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
@@ -150,6 +162,7 @@ func main() {
 			if !whitelisted {
 				continue
 			}
+			var is_dm bool = false
 
 			// Map the users ID to a username if it exists
 			uName, ok := users[ev.User]
@@ -161,6 +174,11 @@ func main() {
 				uName = ev.Username
 			}
 
+			dmName, present := dms[ev.Channel]
+			if present {
+				cName = dmName
+				is_dm = true
+			}
 
 			t, err := getTimeStamp(ev.EventTimestamp)
 			var timeStamp string = "00:00:00"
@@ -179,6 +197,9 @@ func main() {
 			msg = formatUrls(msg)
 
 			msgC := aurora.Gray(msg)
+			if is_dm {
+				msgC = aurora.Red(msg)
+			}
 
 			fmt.Printf("%v - %v - %v: %v\n", timeStamp, aurora.Green(cName), aurora.Blue(uName), msgC)
 
