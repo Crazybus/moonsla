@@ -135,6 +135,27 @@ func filterChannel(name string, channels map[string]string, whitelist []string, 
 	}
 }
 
+func min_int(a int, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func takeN(text []string, n int) []string {
+	return text[:min_int(n, len(text))]
+}
+
+func trim(text string) string {
+	splits := strings.Split(text, "\n")
+	splitted := takeN(splits, 3)
+	if len(splits) > 3 {
+		splitted = append(splitted, "...")
+	}
+	return strings.Join(splitted, "\n")
+}
+
 func main() {
 
 	slackToken, ok := os.LookupEnv("SLACK_TOKEN")
@@ -159,7 +180,7 @@ func main() {
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
-	whitelist := strings.Split(os.Getenv("SLACK_CHANNELS"), ",")
+	whitelist := strings.Split(strings.TrimSpace(os.Getenv("SLACK_CHANNELS")), ",")
 	fmt.Printf("Channel whitelist: %v\n", whitelist)
 
 	blacklist := strings.Split(strings.TrimSpace(os.Getenv("SLACK_BLACKLIST_CHANNELS")), ",")
@@ -208,6 +229,11 @@ func main() {
 			if !whitelisted {
 				continue
 			}
+
+			if strings.TrimSpace(msg) == "" {
+				continue
+			}
+			msg = trim(msg)
 
 			msgC := aurora.Gray(msg)
 			if is_dm {
