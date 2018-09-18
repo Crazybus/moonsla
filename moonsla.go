@@ -103,14 +103,20 @@ func formatAttachments(attachments []slack.Attachment) string {
 	return strings.Join(messages, "\n")
 }
 
-func filterChannel(name string, channels map[string]string, whitelist []string) (whitelisted bool, cName string) {
+func filterChannel(name string, channels map[string]string, whitelist []string, blacklist []string) (whitelisted bool, cName string) {
 	whitelisted = false
+	var blacklisted bool = false
 
 	cName, ok := channels[name]
 	if ok {
 		for _, w := range whitelist {
 			if cName == w {
 				whitelisted = true
+			}
+		}
+		for _, w := range blacklist {
+			if cName == w {
+				blacklisted = true
 			}
 		}
 	} else {
@@ -122,7 +128,11 @@ func filterChannel(name string, channels map[string]string, whitelist []string) 
 		whitelisted = true
 	}
 
-	return whitelisted, cName
+	if blacklisted {
+		return false, cName
+	} else {
+		return whitelisted, cName
+	}
 }
 
 func main() {
@@ -152,16 +162,16 @@ func main() {
 	whitelist := strings.Split(os.Getenv("SLACK_CHANNELS"), ",")
 	fmt.Printf("Channel whitelist: %v\n", whitelist)
 
+	blacklist := strings.Split(strings.TrimSpace(os.Getenv("SLACK_BLACKLIST_CHANNELS")), ",")
+	fmt.Printf("Channel blacklist: %v\n", blacklist)
+
 	for msg := range rtm.IncomingEvents {
 
 		switch ev := msg.Data.(type) {
 
 		case *slack.MessageEvent:
 
-			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist)
-			if !whitelisted {
-				continue
-			}
+			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist, blacklist)
 			var is_dm bool = false
 
 			// Map the users ID to a username if it exists
@@ -195,6 +205,9 @@ func main() {
 			msg := formatMentions(text, users)
 
 			msg = formatUrls(msg)
+			if !whitelisted {
+				continue
+			}
 
 			msgC := aurora.Gray(msg)
 			if is_dm {
