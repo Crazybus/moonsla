@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
+	"github.com/logrusorgru/aurora"
 )
 
 func getChannels(api *slack.Client) (channels map[string]string) {
@@ -17,6 +18,15 @@ func getChannels(api *slack.Client) (channels map[string]string) {
 	chans, _ := api.GetChannels(true)
 	for _, c := range chans {
 		channels[c.ID] = c.Name
+	}
+	return channels
+}
+
+func getDMs(api *slack.Client, users map[string]string) (channels map[string]string) {
+	channels = make(map[string]string)
+	chans, _ := api.GetIMChannels()
+	for _, c := range chans {
+		channels[c.ID] = users[c.User]
 	}
 	return channels
 }
@@ -30,13 +40,13 @@ func getUsers(api *slack.Client) (users map[string]string) {
 	return users
 }
 
-func getTimeStamp(ts string) (timeStamp time.Time) {
+func getTimeStamp(ts string) (timeStamp time.Time, err error) {
 	i, err := strconv.ParseInt(strings.Split(ts, ".")[0], 10, 64)
 	if err != nil {
-		panic(err)
+		return time.Unix(0, 0), err
 	}
 	timeStamp = time.Unix(i, 0)
-	return timeStamp
+	return timeStamp, nil
 }
 
 func formatMentions(msg string, users map[string]string) string {
@@ -93,14 +103,20 @@ func formatAttachments(attachments []slack.Attachment) string {
 	return strings.Join(messages, "\n")
 }
 
-func filterChannel(name string, channels map[string]string, whitelist []string) (whitelisted bool, cName string) {
+func filterChannel(name string, channels map[string]string, whitelist []string, blacklist []string) (whitelisted bool, cName string) {
 	whitelisted = false
+	var blacklisted bool = false
 
 	cName, ok := channels[name]
 	if ok {
 		for _, w := range whitelist {
 			if cName == w {
 				whitelisted = true
+			}
+		}
+		for _, w := range blacklist {
+			if cName == w {
+				blacklisted = true
 			}
 		}
 	} else {
@@ -112,7 +128,32 @@ func filterChannel(name string, channels map[string]string, whitelist []string) 
 		whitelisted = true
 	}
 
-	return whitelisted, cName
+	if blacklisted {
+		return false, cName
+	} else {
+		return whitelisted, cName
+	}
+}
+
+func min_int(a int, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func takeN(text []string, n int) []string {
+	return text[:min_int(n, len(text))]
+}
+
+func trim(text string) string {
+	splits := strings.Split(text, "\n")
+	splitted := takeN(splits, 3)
+	if len(splits) > 3 {
+		splitted = append(splitted, "...")
+	}
+	return strings.Join(splitted, "\n")
 }
 
 func main() {
@@ -133,11 +174,17 @@ func main() {
 	users := getUsers(api)
 	fmt.Printf("Found %v users\n", len(users))
 
+	dms := getDMs(api, users)
+	fmt.Printf("Found %v DMs\n", len(dms))
+
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
-	whitelist := strings.Split(os.Getenv("SLACK_CHANNELS"), ",")
+	whitelist := strings.Split(strings.TrimSpace(os.Getenv("SLACK_CHANNELS")), ",")
 	fmt.Printf("Channel whitelist: %v\n", whitelist)
+
+	blacklist := strings.Split(strings.TrimSpace(os.Getenv("SLACK_BLACKLIST_CHANNELS")), ",")
+	fmt.Printf("Channel blacklist: %v\n", blacklist)
 
 	for msg := range rtm.IncomingEvents {
 
@@ -145,10 +192,8 @@ func main() {
 
 		case *slack.MessageEvent:
 
-			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist)
-			if !whitelisted {
-				continue
-			}
+			whitelisted, cName := filterChannel(ev.Channel, channels, whitelist, blacklist)
+			var is_dm bool = false
 
 			// Map the users ID to a username if it exists
 			uName, ok := users[ev.User]
@@ -160,8 +205,17 @@ func main() {
 				uName = ev.Username
 			}
 
-			t := getTimeStamp(ev.EventTimestamp)
-			timeStamp := fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+			dmName, present := dms[ev.Channel]
+			if present {
+				cName = dmName
+				is_dm = true
+			}
+
+			t, err := getTimeStamp(ev.EventTimestamp)
+			var timeStamp string = "00:00:00"
+			if err == nil {
+				timeStamp = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+			}
 
 			text := ev.Text
 
@@ -172,8 +226,21 @@ func main() {
 			msg := formatMentions(text, users)
 
 			msg = formatUrls(msg)
+			if !whitelisted {
+				continue
+			}
 
-			fmt.Printf("%v - %v - %v: %v\n", timeStamp, cName, uName, msg)
+			if strings.TrimSpace(msg) == "" {
+				continue
+			}
+			msg = trim(msg)
+
+			msgC := aurora.Gray(msg)
+			if is_dm {
+				msgC = aurora.Red(msg)
+			}
+
+			fmt.Printf("%v - %v - %v: %v\n", timeStamp, aurora.Green(cName), aurora.Blue(uName), msgC)
 
 		case *slack.RTMError:
 			fmt.Printf("Error: %s\n", ev.Error())
