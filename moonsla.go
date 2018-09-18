@@ -31,13 +31,13 @@ func getUsers(api *slack.Client) (users map[string]string) {
 	return users
 }
 
-func getTimeStamp(ts string) (timeStamp time.Time) {
+func getTimeStamp(ts string) (timeStamp time.Time, err error) {
 	i, err := strconv.ParseInt(strings.Split(ts, ".")[0], 10, 64)
 	if err != nil {
-		panic(err)
+		return time.Unix(0, 0), err
 	}
 	timeStamp = time.Unix(i, 0)
-	return timeStamp
+	return timeStamp, nil
 }
 
 func formatMentions(msg string, users map[string]string) string {
@@ -161,8 +161,12 @@ func main() {
 				uName = ev.Username
 			}
 
-			t := getTimeStamp(ev.EventTimestamp)
-			timeStamp := fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+
+			t, err := getTimeStamp(ev.EventTimestamp)
+			var timeStamp string = "00:00:00"
+			if err == nil {
+				timeStamp = fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+			}
 
 			text := ev.Text
 
