@@ -29,7 +29,7 @@ export SLACK_CHANNELS='general,random'
 
 Or you can instead blacklist some channels:
 ```
-export SLACK_BLACKLIST_CHANELS='general,random'
+export SLACK_BLACKLIST_CHANNELS='general,random'
 ```
 
 If you are using a [terminal compatible with hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda) URLs will be nicely formatted and clickable
