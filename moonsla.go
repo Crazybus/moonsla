@@ -168,7 +168,7 @@ func main() {
 
 	api := slack.New(
 		slackToken,
-		slack.OptionDebug(true),
+		slack.OptionDebug(false),
 		slack.OptionLog(logger))
 
 	channels := getChannels(api)
