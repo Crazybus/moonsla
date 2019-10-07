@@ -164,11 +164,12 @@ func main() {
 	if !ok {
 		fmt.Println("Please set your SLACK_TOKEN")
 	}
-	api := slack.New(slackToken)
-
 	logger := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
-	slack.SetLogger(logger)
-	api.SetDebug(false)
+
+	api := slack.New(
+		slackToken,
+		slack.OptionDebug(false),
+		slack.OptionLog(logger))
 
 	channels := getChannels(api)
 	fmt.Printf("Found %v channels\n", len(channels))
@@ -237,7 +238,7 @@ func main() {
 			}
 			msg = trim(msg)
 
-			msgC := aurora.Gray(msg)
+			msgC := aurora.Gray(20, msg)
 			if isDm {
 				msgC = aurora.Red(msg)
 			}
