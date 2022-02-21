@@ -15,11 +15,28 @@ import (
 
 func getChannels(api *slack.Client) (channels map[string]string) {
 	channels = make(map[string]string)
-	chans, _ := api.GetChannels(true)
-	for _, c := range chans {
-		channels[c.ID] = c.Name
+
+	cursor := ""
+	for {
+		chans, newCursor, err := api.GetConversations(&slack.GetConversationsParameters{
+			Cursor:          cursor,
+			ExcludeArchived: "true",
+		})
+
+		if err != nil {
+			panic(err)
+		}
+
+		for _, c := range chans {
+			channels[c.ID] = c.NameNormalized
+		}
+		if newCursor == "" {
+			fmt.Println(newCursor, "exiting")
+			return
+		}
+		cursor = newCursor
 	}
-	return channels
+	return
 }
 
 func getDMs(api *slack.Client, users map[string]string) (channels map[string]string) {
